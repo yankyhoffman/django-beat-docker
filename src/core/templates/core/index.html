@@ -1,0 +1,28 @@
+{% extends 'core/_base.html' %}
+
+{% block content %}
+  <h2 class="subtitle">Jobs</h2>
+  <form action="{% url 'core:create' %}" method="post">
+    {% csrf_token %}
+    <input class="button" type="submit" value="Create new job">
+  </form>
+
+  <hr>
+
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <th>Sender</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+        <tr>
+          <td>{{ job.sender }}</td>
+          <td>{{ job.timestamp|date:'Y-m-d H:i:s' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

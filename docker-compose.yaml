@@ -1,0 +1,79 @@
+x-envs:
+  x-django-env: &django-env
+    DEBUG: 1
+    SECRET_KEY: ${SECRET_KEY}
+    CELERY_BROKER_URL: redis://redis:6379
+    CELERY_RESULT_BACKEND: redis://redis:6379
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    POSTGRES_HOST: db
+    POSTGRES_PORT: 5432
+    DATABASE_NAME: postgres
+    DATABASE_USERNAME: postgres
+    DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+
+version: "3.9"
+
+services:
+  webapp:
+    build: .
+    image: djbeat:current
+    user: "${UID}:${GID}"
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *django-env
+    networks:
+      - dj
+    volumes:
+      - ./src:/usr/src/app
+    depends_on:
+      - db
+
+  redis:
+    image: redis:6.2.10
+    networks:
+      - dj
+
+  db:
+    image: postgres:14.3
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - dj
+    ports:
+      - "5432"
+
+  worker:
+    image: djbeat:current
+    user: "${UID}:${GID}"
+    command: [ "celery", "-A", "conf.celery_app", "worker" ]
+    environment:
+      <<: *django-env
+    volumes:
+      - ./src:/usr/src/app:ro
+    depends_on:
+      - redis
+    networks:
+      - dj
+
+  scheduler:
+    image: djbeat:current
+    user: "${UID}:${GID}"
+    command: [ "celery", "-A", "conf.celery_app", "beat", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler" ]
+    environment:
+      <<: *django-env
+    volumes:
+      - ./src:/usr/src/app:ro
+    depends_on:
+      - redis
+      - db
+    networks:
+      - dj
+
+volumes:
+  data:
+
+networks:
+  dj:
