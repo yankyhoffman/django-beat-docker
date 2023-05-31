@@ -61,19 +61,20 @@ services:
   scheduler:
     image: djbeat:current
     user: "${UID}:${GID}"
-    command: [ "celery", "-A", "conf.celery_app", "beat", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler" ]
+    command: [ "celery", "-A", "conf.celery_app", "beat", "--schedule", "/usr/src/var/celerybeat-schedule" ]
     environment:
       <<: *django-env
     volumes:
       - ./src:/usr/src/app:ro
+      - beatvar:/usr/src/var
     depends_on:
       - redis
-      - db
     networks:
       - dj
 
 volumes:
   data:
+  beatvar:
 
 networks:
   dj:
