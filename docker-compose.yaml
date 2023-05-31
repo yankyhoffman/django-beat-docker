@@ -15,7 +15,11 @@ version: "3.9"
 
 services:
   webapp:
-    build: .
+    build:
+      context: .
+      args:
+        - UID=${UID}
+        - GID=${GID}
     image: djbeat:current
     user: "${UID}:${GID}"
     ports:
